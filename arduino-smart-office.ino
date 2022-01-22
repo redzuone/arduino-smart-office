@@ -158,6 +158,7 @@ void modeTwo() {
     int pirOneValue = digitalRead(pirOnePin);
     int pirTwoValue = digitalRead(pirTwoPin);
     unsigned long currentMillisPirOne = millis();
+    unsigned long currentMillisPirTwo = millis();
     if (pirOneValue) {
       Serial.println("pir 1 on");
       //turn on
@@ -177,8 +178,13 @@ void modeTwo() {
     
     if (pirTwoValue) {
       //Serial.println("pir 2");
-    } else {
+      digitalWrite(ledTwoPin, HIGH);
+      digitalWrite(motorTwoPin, HIGH);
+      previousMillisPirTwo = millis();
       
+    } else if (currentMillisPirTwo - previousMillisPirTwo > 5000 && !pirTwoValue) {
+      digitalWrite(ledTwoPin, LOW);
+      digitalWrite(motorTwoPin, LOW);
     }
   }
 }
@@ -199,5 +205,3 @@ void turnOffAll() {
 void pir() {
   
 }
-
-void inaData()
