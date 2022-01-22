@@ -1,4 +1,11 @@
 #include <SoftwareSerial.h>
+#include <Wire.h>
+#include <Adafruit_INA219.h>
+
+Adafruit_INA219 ina219_1(0x40);
+Adafruit_INA219 ina219_2(0x41);
+Adafruit_INA219 ina219_3(0x44);
+Adafruit_INA219 ina219_4(0x45);
 
 unsigned long previousMillis = 0;
 unsigned long previousMillisPirOne = 0;
@@ -17,7 +24,7 @@ int hc05_tx = 4;
 int testButton = 2; // button for quick testing - mode
 
 int newData = 0;
-int mode = 0;
+int mode = 2;
 // 0 is off mode
 // 1  manual mode
 // 2 auto mode
@@ -42,6 +49,7 @@ void turnOffAll();
 void modeOne(String);
 void modeTwo();
 void sendData();
+void getIna219Data(Adafruit_INA219 ina219);
 
 void setup() {
   Serial.begin(9600);
@@ -54,6 +62,23 @@ void setup() {
   pinMode(pirOnePin, INPUT);
   pinMode(pirTwoPin, INPUT);
   pinMode(testButton, INPUT_PULLUP);
+
+  if (! ina219_1.begin()) {
+    Serial.println("Failed to find INA219 chip 1");
+    while (1) { delay(10); }
+  }
+  if (! ina219_2.begin()) {
+    Serial.println("Failed to find INA219 chip 2");
+    while (1) { delay(10); }
+  }
+  if (! ina219_3.begin()) {
+    Serial.println("Failed to find INA219 chip 3");
+    while (1) { delay(10); }
+  }
+  if (! ina219_4.begin()) {
+    Serial.println("Failed to find INA219 chip 4");
+    while (1) { delay(10); }
+  }
 }
 void loop() {
   unsigned long currentMillis = millis();
@@ -98,8 +123,8 @@ void loop() {
   }
   
   
-  // send information from serial monitor - mostly for testing
-  // enter 0, 1, or 2 in serial monitor to change mode
+  // send information from serial monitor - mostly for testing - may not work
+  // enter 0, 1, or 2 in serial monitor to change mode | 4 to call sendData();
   if (Serial.available()) {
     int seriall = Serial.read();
     if (seriall == '0') {
@@ -111,7 +136,11 @@ void loop() {
     } else if (seriall == '2') {
       mode = 2;
       Serial.println("mode 2 serial");
+    } else if (seriall == '4') {
+      sendData();
+      Serial.println("sendData()");
     }
+    newData = 0;
   }
 }
 
@@ -159,16 +188,16 @@ void modeTwo() {
     int pirTwoValue = digitalRead(pirTwoPin);
     unsigned long currentMillisPirOne = millis();
     unsigned long currentMillisPirTwo = millis();
-    if (pirOneValue) {
-      Serial.println("pir 1 on");
-      //turn on
+    if (pirOneValue && currentMillisPirOne - previousMillisPirOne > 1000) {
+      Serial.println("reset timer pir 1");
+      //turn on led, motor
       digitalWrite(ledOnePin, HIGH);
       digitalWrite(motorOnePin, HIGH);
       // reset timer
       previousMillisPirOne = millis();
       
-    } else if (currentMillisPirOne - previousMillisPirOne > 5000 && !pirOneValue){
-      // only execute this after 5s passed and pirOne is on
+    } else if (!pirOneValue && currentMillisPirOne - previousMillisPirOne > 3000){
+      // only execute this after 3s passed and pirOne is on
       // Serial.println(String(previousMillisPirOne)+" "+String(currentMillisPirOne));
       // Serial.println("pir 1 off");
       // turn  off
@@ -176,13 +205,13 @@ void modeTwo() {
       digitalWrite(motorOnePin, LOW);
     }
     
-    if (pirTwoValue) {
-      //Serial.println("pir 2");
+    if (pirTwoValue && currentMillisPirTwo - previousMillisPirTwo > 1000) {
+      //Serial.println("reset timer pir 2");
       digitalWrite(ledTwoPin, HIGH);
       digitalWrite(motorTwoPin, HIGH);
       previousMillisPirTwo = millis();
       
-    } else if (currentMillisPirTwo - previousMillisPirTwo > 5000 && !pirTwoValue) {
+    } else if (!pirTwoValue && currentMillisPirTwo - previousMillisPirTwo > 3000) {
       digitalWrite(ledTwoPin, LOW);
       digitalWrite(motorTwoPin, LOW);
     }
@@ -192,7 +221,47 @@ void modeTwo() {
 void sendData() {
   Serial.println("data");
   MyBlue.println("data" + String(random(1, 10)));
+  Adafruit_INA219 ina219Array[4] = {ina219_1, ina219_2, ina219_3, ina219_4};
+  float shuntvoltage = 0;
+  float busvoltage = 0;
+  float current_mA = 0;
+  float loadvoltage = 0;
+  float power_mW = 0;
+
+  for (int i = 0; i < 4; i++) {
+    shuntvoltage = ina219Array[i].getShuntVoltage_mV();
+    busvoltage = ina219Array[i].getBusVoltage_V();
+    current_mA = ina219Array[i].getCurrent_mA();
+    power_mW = ina219Array[i].getPower_mW();
+    loadvoltage = busvoltage + (shuntvoltage / 1000);
   
+    String inaData = "\nINA " + String(i) + "\nBus Voltage:   " + String(busvoltage) + " V";
+    inaData += "\nShunt Voltage: " + String(shuntvoltage) + " mV";
+    inaData += "\nLoad Voltage:  " + String(loadvoltage) + " V";
+    inaData += "\nCurrent:       " + String(current_mA) + " mA";
+    inaData += "\nPower:         " + String(power_mW) + " mW";
+    
+    Serial.println(inaData);
+  }
+  
+  /*shuntvoltage = ina219_1.getShuntVoltage_mV();
+  busvoltage = ina219_1.getBusVoltage_V();
+  current_mA = ina219_1.getCurrent_mA();
+  power_mW = ina219_1.getPower_mW();
+  loadvoltage = busvoltage + (shuntvoltage / 1000);
+
+  String inaData = "INA 1\nBus Voltage:   " + String(busvoltage) + " V";
+  inaData += "\nShunt Voltage: " + String(shuntvoltage) + " mV";
+  inaData += "\nLoad Voltage:  " + String(loadvoltage) + " V";
+  inaData += "\nCurrent:       " + String(current_mA) + " mA";
+  inaData += "\nPower:         " + String(power_mW) + " mW";
+  
+  Serial.println(inaData);*/
+  //getIna219Data(ina219Array[0]);
+}
+
+void getIna219Data(Adafruit_INA219 ina219) {
+  Serial.println("test" +String(ina219.getShuntVoltage_mV()));
 }
 
 void turnOffAll() {
