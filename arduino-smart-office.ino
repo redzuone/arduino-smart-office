@@ -45,6 +45,11 @@ String ledTwoOff = "led2off";
 String ledTwoOn = "led2on";
 String toggleModeCode = "togMode";
 
+String ledOneToggle = "led1toggle";
+String motorOneToggle = "motor1toggle";
+String ledTwoToggle = "led2toggle";
+String motorTwoToggle = "motor2toggle";
+
 // state
 int newData = 0;
 String mode = "off";
@@ -71,7 +76,8 @@ void serialTest();
 void setup() {
   Serial.begin(115200);
   MyBlue.begin(115200);
-  Serial.println("Readyy");
+  Serial.println("Ready");
+  MyBlue.println("Ready");
   pinMode(motorOnePin, OUTPUT);
   pinMode(motorTwoPin, OUTPUT);
   pinMode(ledOnePin, OUTPUT);
@@ -110,16 +116,21 @@ void loop() {
   }
 
   // change mode if relevant
-  if (c.indexOf(toggleModeCode) != -1) {
-    Serial.println("toggling mode");
+  if (c == toggleModeCode) {
+  //if (c.indexOf(toggleModeCode) != -1) {
+    Serial.print("toggling mode - ");
     if (mode == "off") {
       mode = "user";
+      Serial.print("user");
     } else if (mode == "user") {
       mode = "auto";
+      turnOffAll();
+      Serial.print("auto");
     } else if (mode == "auto") {
       mode = "off";
+      Serial.print("off");
     }
-      MyBlue.println("mode: "+String(mode));
+    MyBlue.println("mode "+ mode);
   }
 
   // send data if requested
@@ -152,37 +163,41 @@ void loop() {
 
 // 
 void modeOne(String c) {
-  if (c == motorOneOff) {
-    digitalWrite(motorOnePin, LOW);
-    MyBlue.println(motorOneOff);
-  } else if (c == motorOneOn) {
-    digitalWrite(motorOnePin, HIGH);
-    MyBlue.println(motorOneOn);
-  } else if (c == ledOneOff) {
-    digitalWrite(ledOnePin, LOW);
-    MyBlue.println(ledOneOff);
-  } else if (c == ledOneOn) {
+  if (c == ledOneToggle && ledOneState == 0) {
     digitalWrite(ledOnePin, HIGH);
-    MyBlue.println(ledOneOn);
-  } else if (c == motorTwoOff) {
-    digitalWrite(motorTwoPin, LOW);
-    MyBlue.println(motorTwoOff);
-  } else if (c == motorTwoOn) {
-    digitalWrite(motorTwoPin, HIGH);
-    MyBlue.println(motorTwoOn);
-  } else if (c == ledTwoOff) {
-    digitalWrite(ledTwoPin, LOW);
-    MyBlue.println(ledTwoOff);
-  } else if (c == ledTwoOn) {
+    ledOneState = 1;
+    MyBlue.println("led1on");
+  } else if (c == ledOneToggle && ledOneState == 1) {
+    digitalWrite(ledOnePin, LOW);
+    ledOneState = 0;
+    MyBlue.println("led1off");
+    
+  } else if (c == motorOneToggle && motorOneState == 0) {
+    digitalWrite(motorOnePin, HIGH);
+    motorOneState = 1;
+    MyBlue.println("motor1on");
+  } else if (c == motorOneToggle && motorOneState == 1) {
+    digitalWrite(motorOnePin, LOW);
+    motorOneState = 0;
+    MyBlue.println("motor1off");
+    
+  } else if (c == ledTwoToggle && ledTwoState == 0) {
     digitalWrite(ledTwoPin, HIGH);
-    MyBlue.println(ledTwoOn);
-  } else if (c == reqData) {
-    // sendData carried out in main loop
-  } else if (c == toggleModeCode) {
-    //pass
-  } else {
-    MyBlue.println("u:");
-    Serial.println("modeOne unkown: "+String(c));
+    ledTwoState = 1;
+    MyBlue.println("led2on");
+  } else if (c == ledTwoToggle && ledTwoState == 1) {
+    digitalWrite(ledTwoPin, LOW);
+    ledTwoState = 0;
+    MyBlue.println("led2off");
+    
+  } else if (c == motorTwoToggle && motorTwoState == 0) {
+    digitalWrite(motorTwoPin, HIGH);
+    motorTwoState = 1;
+    MyBlue.println("motor2on");
+  } else if (c == motorTwoToggle && motorTwoState == 1) {
+    digitalWrite(motorTwoPin, LOW);
+    motorTwoState = 0;
+    MyBlue.println("motor2off");
   }
 }
 
@@ -223,11 +238,19 @@ void modeTwo() {
       //Serial.println("reset timer pir 2");
       digitalWrite(ledTwoPin, HIGH);
       digitalWrite(motorTwoPin, HIGH);
+      if (!pirTwoState) { // pir high
+        MyBlue.println("room2on");
+        Serial.println("room2on");
+        pirTwoState = 1;
+      }
       previousMillisPirTwo = millis();
       
-    } else if (!pirTwoValue && currentMillisPirTwo - previousMillisPirTwo > 3000) {
+    } else if (!pirTwoValue && currentMillisPirTwo - previousMillisPirTwo > 3000 && pirTwoState == 1) {
       digitalWrite(ledTwoPin, LOW);
       digitalWrite(motorTwoPin, LOW);
+      MyBlue.println("room2off");
+      Serial.println("room2off");
+      pirTwoState = 0;
     }
 
     if (!pirOneState && pirOneValue) { // pir high
@@ -292,6 +315,11 @@ void turnOffAll() {
   digitalWrite(motorTwoPin, LOW);
   digitalWrite(ledOnePin, LOW);
   digitalWrite(ledOnePin, LOW);
+  ledOneState = 0;
+  motorOneState = 0;
+  ledTwoState = 0;
+  motorTwoState = 0;
+  MyBlue.println("led1off,motor1off,led2off,motor2off");
 }
 
 void serialTest() {
