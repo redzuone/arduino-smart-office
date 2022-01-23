@@ -2,10 +2,17 @@
 #include <Wire.h>
 #include <Adafruit_INA219.h>
 
-Adafruit_INA219 ina219_1(0x40);
-Adafruit_INA219 ina219_2(0x41);
-Adafruit_INA219 ina219_3(0x44);
-Adafruit_INA219 ina219_4(0x45);
+// note:
+// this sketch use 115200 baud rate. default for hc05 is 9600. change baud rate in setup() or use AT commands for hc05
+// pay attention to pin number
+
+// todo: toggle instead of on and off
+
+Adafruit_INA219 *ina219_1 = new Adafruit_INA219(0x40);
+Adafruit_INA219 *ina219_2 = new Adafruit_INA219(0x41);
+Adafruit_INA219 *ina219_3 = new Adafruit_INA219(0x44);
+Adafruit_INA219 *ina219_4 = new Adafruit_INA219(0x45);
+Adafruit_INA219 ina219Array[4] = {*ina219_1, *ina219_2, *ina219_3, *ina219_4};
 
 unsigned long previousMillis = 0;
 unsigned long previousMillisPirOne = 0;
@@ -20,11 +27,12 @@ int pirOnePin = 5;
 int pirTwoPin = 6;
 int hc05_rx = 3;
 int hc05_tx = 4;
+// connect arduino's tx->hc05's rx and arduino's rx->hc05's tx
 
 int testButton = 2; // button for quick testing - mode
 
 int newData = 0;
-int mode = 2;
+int mode = 0;
 // 0 is off mode
 // 1  manual mode
 // 2 auto mode
@@ -42,7 +50,6 @@ int ledTwoOn = "8";
 int toggleMode = "9";
 
 SoftwareSerial MyBlue(hc05_rx, hc05_tx); // RX | TX 
-// connect arduino tx->hc05 rx and arduino rx->hc05 tx
 
 void bluetooth();
 void turnOffAll();
@@ -50,11 +57,12 @@ void modeOne(String);
 void modeTwo();
 void sendData();
 void getIna219Data(Adafruit_INA219 ina219);
+void serialTest();
 
 void setup() {
-  Serial.begin(9600);
-  MyBlue.begin(9600);
-  Serial.println("Ready");
+  Serial.begin(115200);
+  MyBlue.begin(115200);
+  Serial.println("Readyy");
   pinMode(motorOnePin, OUTPUT);
   pinMode(motorTwoPin, OUTPUT);
   pinMode(ledOnePin, OUTPUT);
@@ -62,20 +70,21 @@ void setup() {
   pinMode(pirOnePin, INPUT);
   pinMode(pirTwoPin, INPUT);
   pinMode(testButton, INPUT_PULLUP);
-
-  if (! ina219_1.begin()) {
+  
+  uint32_t currentFrequency;
+  if (! ina219Array[0].begin()) {
     Serial.println("Failed to find INA219 chip 1");
     while (1) { delay(10); }
   }
-  if (! ina219_2.begin()) {
+  if (! ina219Array[1].begin()) {
     Serial.println("Failed to find INA219 chip 2");
     while (1) { delay(10); }
   }
-  if (! ina219_3.begin()) {
+  if (! ina219Array[2].begin()) {
     Serial.println("Failed to find INA219 chip 3");
     while (1) { delay(10); }
   }
-  if (! ina219_4.begin()) {
+  if (! ina219Array[3].begin()) {
     Serial.println("Failed to find INA219 chip 4");
     while (1) { delay(10); }
   }
@@ -125,23 +134,7 @@ void loop() {
   
   // send information from serial monitor - mostly for testing - may not work
   // enter 0, 1, or 2 in serial monitor to change mode | 4 to call sendData();
-  if (Serial.available()) {
-    int seriall = Serial.read();
-    if (seriall == '0') {
-      mode = 0;
-      Serial.println("mode 0 serial");
-    } else if (seriall == '1') {
-      mode = 1;
-      Serial.println("mode 1 ser");
-    } else if (seriall == '2') {
-      mode = 2;
-      Serial.println("mode 2 serial");
-    } else if (seriall == '4') {
-      sendData();
-      Serial.println("sendData()");
-    }
-    newData = 0;
-  }
+  serialTest();
 }
 
 // functions
@@ -215,13 +208,15 @@ void modeTwo() {
       digitalWrite(ledTwoPin, LOW);
       digitalWrite(motorTwoPin, LOW);
     }
+
+    // only for testing with serial monitor
+    serialTest();
   }
 }
 
 void sendData() {
-  Serial.println("data");
-  MyBlue.println("data" + String(random(1, 10)));
-  Adafruit_INA219 ina219Array[4] = {ina219_1, ina219_2, ina219_3, ina219_4};
+  //Serial.println("data");
+  //MyBlue.println("data" + String(random(1, 10)));
   float shuntvoltage = 0;
   float busvoltage = 0;
   float current_mA = 0;
@@ -235,29 +230,22 @@ void sendData() {
     power_mW = ina219Array[i].getPower_mW();
     loadvoltage = busvoltage + (shuntvoltage / 1000);
   
-    String inaData = "\nINA " + String(i) + "\nBus Voltage:   " + String(busvoltage) + " V";
+    /*String inaData = "\nINA " + String(i) + "\nBus Voltage:   " + String(busvoltage) + " V";
     inaData += "\nShunt Voltage: " + String(shuntvoltage) + " mV";
     inaData += "\nLoad Voltage:  " + String(loadvoltage) + " V";
     inaData += "\nCurrent:       " + String(current_mA) + " mA";
-    inaData += "\nPower:         " + String(power_mW) + " mW";
+    inaData += "\nPower:         " + String(power_mW) + " mW";*/
+    //Serial.println(inaData);
     
-    Serial.println(inaData);
+    Serial.println("INA "+ String(i));
+    Serial.print("Bus Voltage:   "); Serial.print(busvoltage); Serial.println(" V");
+    Serial.print("Shunt Voltage: "); Serial.print(shuntvoltage); Serial.println(" mV");
+    Serial.print("Load Voltage:  "); Serial.print(loadvoltage); Serial.println(" V");
+    Serial.print("Current:       "); Serial.print(current_mA); Serial.println(" mA");
+    Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
+    Serial.println("");
+    
   }
-  
-  /*shuntvoltage = ina219_1.getShuntVoltage_mV();
-  busvoltage = ina219_1.getBusVoltage_V();
-  current_mA = ina219_1.getCurrent_mA();
-  power_mW = ina219_1.getPower_mW();
-  loadvoltage = busvoltage + (shuntvoltage / 1000);
-
-  String inaData = "INA 1\nBus Voltage:   " + String(busvoltage) + " V";
-  inaData += "\nShunt Voltage: " + String(shuntvoltage) + " mV";
-  inaData += "\nLoad Voltage:  " + String(loadvoltage) + " V";
-  inaData += "\nCurrent:       " + String(current_mA) + " mA";
-  inaData += "\nPower:         " + String(power_mW) + " mW";
-  
-  Serial.println(inaData);*/
-  //getIna219Data(ina219Array[0]);
 }
 
 void getIna219Data(Adafruit_INA219 ina219) {
@@ -271,6 +259,23 @@ void turnOffAll() {
   digitalWrite(ledOnePin, LOW);
 }
 
-void pir() {
-  
+void serialTest() {
+  if (Serial.available()) {
+    //Serial.println("open");
+    int seriall = Serial.read();
+    if (seriall == '0') {
+      mode = 0;
+      Serial.println("mode 0 serial");
+    } else if (seriall == '1') {
+      mode = 1;
+      Serial.println("mode 1 ser");
+    } else if (seriall == '2') {
+      mode = 2;
+      Serial.println("mode 2 serial");
+    } else if (seriall == '4') {
+      //4Serial.println("sendData()");
+      sendData();
+    }
+    newData = 0;
+  }
 }
