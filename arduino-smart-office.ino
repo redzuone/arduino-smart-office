@@ -34,15 +34,15 @@ int testButton = 2; // button for quick testing - mode
 
 
 // bluetooth codes
-String motorOneOff = "0";
-String motorOneOn = "1";
-String ledOneOff = "2";
-String ledOneOn = "3";
+String motorOneOff = "motor1off";
+String motorOneOn = "motor1on";
+String ledOneOff = "led1off";
+String ledOneOn = "led1on";
 String reqData = "4";
-String motorTwoOff = "5";
-String motorTwoOn = "6";
-String ledTwoOff = "7";
-String ledTwoOn = "8";
+String motorTwoOff = "motor2off";
+String motorTwoOn = "motor2on";
+String ledTwoOff = "led2off";
+String ledTwoOn = "led2on";
 String toggleModeCode = "togMode";
 
 // state
@@ -154,35 +154,35 @@ void loop() {
 void modeOne(String c) {
   if (c == motorOneOff) {
     digitalWrite(motorOnePin, LOW);
-    MyBlue.println("motor 1 off");
+    MyBlue.println(motorOneOff);
   } else if (c == motorOneOn) {
     digitalWrite(motorOnePin, HIGH);
-    MyBlue.println("motor 1 on");
+    MyBlue.println(motorOneOn);
   } else if (c == ledOneOff) {
     digitalWrite(ledOnePin, LOW);
-    MyBlue.println("led 1 off");
+    MyBlue.println(ledOneOff);
   } else if (c == ledOneOn) {
     digitalWrite(ledOnePin, HIGH);
-    MyBlue.println("led1on");
+    MyBlue.println(ledOneOn);
   } else if (c == motorTwoOff) {
     digitalWrite(motorTwoPin, LOW);
-    MyBlue.println("motor 2 off");
+    MyBlue.println(motorTwoOff);
   } else if (c == motorTwoOn) {
     digitalWrite(motorTwoPin, HIGH);
-    MyBlue.println("motor 2 on");
+    MyBlue.println(motorTwoOn);
   } else if (c == ledTwoOff) {
     digitalWrite(ledTwoPin, LOW);
-    MyBlue.println("led 2 off");
+    MyBlue.println(ledTwoOff);
   } else if (c == ledTwoOn) {
     digitalWrite(ledTwoPin, HIGH);
-    MyBlue.println("led 2 on");
+    MyBlue.println(ledTwoOn);
   } else if (c == reqData) {
     // sendData carried out in main loop
   } else if (c == toggleModeCode) {
     //pass
   } else {
-    MyBlue.println("u");
-    Serial.println("print in modeOne: "+String(c));
+    MyBlue.println("u:");
+    Serial.println("modeOne unkown: "+String(c));
   }
 }
 
@@ -194,7 +194,6 @@ void modeTwo() {
     unsigned long currentMillisPirOne = millis();
     unsigned long currentMillisPirTwo = millis();
     if (pirOneValue && currentMillisPirOne - previousMillisPirOne > 1000) {
-      Serial.println("reset timer pir 1");
       //turn on led, motor
       digitalWrite(ledOnePin, HIGH);
       digitalWrite(motorOnePin, HIGH);
