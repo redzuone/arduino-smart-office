@@ -55,6 +55,8 @@ int ledOneState = 0;
 int motorOneState = 0;
 int ledTwoState = 0;
 int motorTwoState = 0;
+int pirOneState = 0;
+int pirTwoState = 0;
 
 SoftwareSerial MyBlue(hc05_rx, hc05_tx); // RX | TX 
 
@@ -161,7 +163,7 @@ void modeOne(String c) {
     MyBlue.println("led 1 off");
   } else if (c == ledOneOn) {
     digitalWrite(ledOnePin, HIGH);
-    MyBlue.println("led 1 on");
+    MyBlue.println("led1on");
   } else if (c == motorTwoOff) {
     digitalWrite(motorTwoPin, LOW);
     MyBlue.println("motor 2 off");
@@ -196,16 +198,26 @@ void modeTwo() {
       //turn on led, motor
       digitalWrite(ledOnePin, HIGH);
       digitalWrite(motorOnePin, HIGH);
+      //MyBlue.println("pir1high,led1on,motor1on");
+      if (!pirOneState) { // pir high
+        MyBlue.println("room1on");
+        Serial.println("room1on");
+        pirOneState = 1;
+      }
       // reset timer
       previousMillisPirOne = millis();
       
-    } else if (!pirOneValue && currentMillisPirOne - previousMillisPirOne > 3000){
+    } else if (!pirOneValue && currentMillisPirOne - previousMillisPirOne > 3000 && pirOneState == 1){
       // only execute this after 3s passed and pirOne is on
       // Serial.println(String(previousMillisPirOne)+" "+String(currentMillisPirOne));
       // Serial.println("pir 1 off");
       // turn  off
       digitalWrite(ledOnePin, LOW);
       digitalWrite(motorOnePin, LOW);
+      MyBlue.println("room1off");
+      Serial.println("room1off");
+      pirOneState = 0;
+      //MyBlue.println("pir1low,led1off,motor1off");
     }
     
     if (pirTwoValue && currentMillisPirTwo - previousMillisPirTwo > 1000) {
@@ -219,6 +231,14 @@ void modeTwo() {
       digitalWrite(motorTwoPin, LOW);
     }
 
+    if (!pirOneState && pirOneValue) { // pir high
+      //.println("room1on");
+      //pirOneState = 1;
+    } else if (pirOneState && !pirOneValue) { //pir low
+      //MyBlue.println("room1off");
+      //pirOneState = 0;
+    }
+  
     // only for testing with serial monitor
     serialTest();
   }
