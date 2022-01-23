@@ -6,8 +6,6 @@
 // this sketch use 115200 baud rate. default for hc05 is 9600. change baud rate in setup() or use AT commands for hc05
 // pay attention to pin number
 
-// todo: toggle instead of on and off
-
 Adafruit_INA219 *ina219_1 = new Adafruit_INA219(0x40);
 Adafruit_INA219 *ina219_2 = new Adafruit_INA219(0x41);
 Adafruit_INA219 *ina219_3 = new Adafruit_INA219(0x44);
@@ -31,20 +29,9 @@ int hc05_tx = 4;
 
 int testButton = 2; // button for quick testing - mode
 
-
-
 // bluetooth codes
-String motorOneOff = "motor1off";
-String motorOneOn = "motor1on";
-String ledOneOff = "led1off";
-String ledOneOn = "led1on";
 String reqData = "4";
-String motorTwoOff = "motor2off";
-String motorTwoOn = "motor2on";
-String ledTwoOff = "led2off";
-String ledTwoOn = "led2on";
 String toggleModeCode = "togMode";
-
 String ledOneToggle = "led1toggle";
 String motorOneToggle = "motor1toggle";
 String ledTwoToggle = "led2toggle";
@@ -52,10 +39,7 @@ String motorTwoToggle = "motor2toggle";
 
 // state
 int newData = 0;
-String mode = "off";
-// 0 is off mode
-// 1  manual mode
-// 2 auto mode
+String mode = "off"; // off, user, auto
 int ledOneState = 0;
 int motorOneState = 0;
 int ledTwoState = 0;
@@ -65,12 +49,10 @@ int pirTwoState = 0;
 
 SoftwareSerial MyBlue(hc05_rx, hc05_tx); // RX | TX 
 
-void bluetooth();
 void turnOffAll();
 void modeOne(String);
 void modeTwo();
 void sendData();
-void getIna219Data(Adafruit_INA219 ina219);
 void serialTest();
 
 void setup() {
@@ -138,7 +120,7 @@ void loop() {
     sendData();
   }
 
-  // execute appropirate code depending on mode
+  // execute appropriate code depending on mode
   if(newData == 1 || mode == "auto") {
     if(mode == "off") {
       Serial.println("mode 0");
@@ -161,7 +143,6 @@ void loop() {
 
 // functions
 
-// 
 void modeOne(String c) {
   if (c == ledOneToggle && ledOneState == 0) {
     digitalWrite(ledOnePin, HIGH);
@@ -281,13 +262,6 @@ void sendData() {
     current_mA = ina219Array[i].getCurrent_mA();
     power_mW = ina219Array[i].getPower_mW();
     loadvoltage = busvoltage + (shuntvoltage / 1000);
-  
-    /*String inaData = "\nINA " + String(i) + "\nBus Voltage:   " + String(busvoltage) + " V";
-    inaData += "\nShunt Voltage: " + String(shuntvoltage) + " mV";
-    inaData += "\nLoad Voltage:  " + String(loadvoltage) + " V";
-    inaData += "\nCurrent:       " + String(current_mA) + " mA";
-    inaData += "\nPower:         " + String(power_mW) + " mW";*/
-    //Serial.println(inaData);
     
     Serial.println("INA "+ String(i));
     Serial.print("Bus Voltage:   "); Serial.print(busvoltage); Serial.println(" V");
@@ -304,10 +278,6 @@ void sendData() {
   data += "data"+String(random(1, 10));
   Serial.println(data);
   MyBlue.println(data);
-}
-
-void getIna219Data(Adafruit_INA219 ina219) {
-  Serial.println("test" +String(ina219.getShuntVoltage_mV()));
 }
 
 void turnOffAll() {
