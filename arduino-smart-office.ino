@@ -119,7 +119,6 @@ void loop() {
   if(newData == 1 || mode == 2) {
     if(mode == 0) {
       Serial.println("mode 0");
-      MyBlue.println("mode 0");
       turnOffAll();
     } else if(mode == 1) {
       Serial.println("mode 1");
@@ -222,7 +221,7 @@ void sendData() {
   float current_mA = 0;
   float loadvoltage = 0;
   float power_mW = 0;
-
+  String data = "";
   for (int i = 0; i < 4; i++) {
     shuntvoltage = ina219Array[i].getShuntVoltage_mV();
     busvoltage = ina219Array[i].getBusVoltage_V();
@@ -245,7 +244,13 @@ void sendData() {
     Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
     Serial.println("");
     
+    //MyBlue.print("data,pir," + String(i) + ",voltage," + String(loadvoltage) + ""
+    //  ",current," + String(current_mA)+",power,"+String(power_mW));
+    data += String(loadvoltage)+","+String(current_mA)+","+String(power_mW)+",";
   }
+  data += "data";
+  Serial.println(data);
+  MyBlue.println(data);
 }
 
 void getIna219Data(Adafruit_INA219 ina219) {
