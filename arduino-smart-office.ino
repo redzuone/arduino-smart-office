@@ -43,11 +43,11 @@ String motorTwoOff = "5";
 String motorTwoOn = "6";
 String ledTwoOff = "7";
 String ledTwoOn = "8";
-String toggleMode = "togMode";
+String toggleModeCode = "togMode";
 
 // state
 int newData = 0;
-String mode = 0;
+String mode = "off";
 // 0 is off mode
 // 1  manual mode
 // 2 auto mode
@@ -108,13 +108,16 @@ void loop() {
   }
 
   // change mode if relevant
-  if (c == toggleMode) {
-    mode += 1;
-    if (mode > 2) {
-      mode = 0;
-      
-      MyBlue.println("mode"+String(mode));
+  if (c.indexOf(toggleModeCode) != -1) {
+    Serial.println("toggling mode");
+    if (mode == "off") {
+      mode = "user";
+    } else if (mode == "user") {
+      mode = "auto";
+    } else if (mode == "auto") {
+      mode = "off";
     }
+      MyBlue.println("mode: "+String(mode));
   }
 
   // send data if requested
@@ -123,14 +126,14 @@ void loop() {
   }
 
   // execute appropirate code depending on mode
-  if(newData == 1 || mode == toggleMode) {
-    if(mode == 0) {
+  if(newData == 1 || mode == "auto") {
+    if(mode == "off") {
       Serial.println("mode 0");
       turnOffAll();
-    } else if(mode == 1) {
+    } else if(mode == "user") {
       Serial.println("mode 1");
       modeOne(c);
-    } else if(mode == 2) {
+    } else if(mode == "auto") {
       Serial.println("mode 2");
       modeTwo();
     }
@@ -171,16 +174,17 @@ void modeOne(String c) {
   } else if (c == ledTwoOn) {
     digitalWrite(ledTwoPin, HIGH);
     MyBlue.println("led 2 on");
-  } else if( c == reqData) {
+  } else if (c == reqData) {
     // sendData carried out in main loop
+  } else if (c == toggleModeCode) {
+    //pass
   } else {
     MyBlue.println("u");
-    Serial.println("print in modeOne"+String(c));
+    Serial.println("print in modeOne: "+String(c));
   }
 }
 
 void modeTwo() {
-  Serial.println("mode 2");
   while(!MyBlue.available()) {
     unsigned long currentMillis = millis();
     int pirOneValue = digitalRead(pirOnePin);
@@ -275,16 +279,16 @@ void serialTest() {
   if (Serial.available()) {
     //Serial.println("open");
     int seriall = Serial.read();
-    if (seriall == '0') {
-      mode = 0;
+    if (seriall == '0' || seriall == "off") {
+      mode = "off";
       Serial.println("mode 0 serial");
-    } else if (seriall == '1') {
-      mode = 1;
+    } else if (seriall == '1' || seriall == "user") {
+      mode = "user";
       Serial.println("mode 1 ser");
-    } else if (seriall == '2') {
-      mode = 2;
+    } else if (seriall == '2' || seriall == "auto") {
+      mode = "auto";
       Serial.println("mode 2 serial");
-    } else if (seriall == '4') {
+    } else if (seriall == '4' || seriall == "data") {
       //4Serial.println("sendData()");
       sendData();
     }
