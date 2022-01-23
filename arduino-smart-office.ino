@@ -31,23 +31,30 @@ int hc05_tx = 4;
 
 int testButton = 2; // button for quick testing - mode
 
-int newData = 0;
-int mode = 0;
-// 0 is off mode
-// 1  manual mode
-// 2 auto mode
+
 
 // bluetooth codes
 String motorOneOff = "0";
 String motorOneOn = "1";
-int ledOneOff = "2";
-int ledOneOn = "3";
-int reqData = "4";
-int motorTwoOff = "5";
-int motorTwoOn = "6";
-int ledTwoOff = "7";
-int ledTwoOn = "8";
-int toggleMode = "9";
+String ledOneOff = "2";
+String ledOneOn = "3";
+String reqData = "4";
+String motorTwoOff = "5";
+String motorTwoOn = "6";
+String ledTwoOff = "7";
+String ledTwoOn = "8";
+String toggleMode = "togMode";
+
+// state
+int newData = 0;
+String mode = 0;
+// 0 is off mode
+// 1  manual mode
+// 2 auto mode
+int ledOneState = 0;
+int motorOneState = 0;
+int ledTwoState = 0;
+int motorTwoState = 0;
 
 SoftwareSerial MyBlue(hc05_rx, hc05_tx); // RX | TX 
 
@@ -97,7 +104,7 @@ void loop() {
   if (MyBlue.available()) {
     newData = 1;
     c = MyBlue.readString();
-    Serial.println(c);
+    Serial.println("received: "+String(c));
   }
 
   // change mode if relevant
@@ -116,7 +123,7 @@ void loop() {
   }
 
   // execute appropirate code depending on mode
-  if(newData == 1 || mode == 2) {
+  if(newData == 1 || mode == toggleMode) {
     if(mode == 0) {
       Serial.println("mode 0");
       turnOffAll();
@@ -124,7 +131,7 @@ void loop() {
       Serial.println("mode 1");
       modeOne(c);
     } else if(mode == 2) {
-      //Serial.println("mode 2");
+      Serial.println("mode 2");
       modeTwo();
     }
     newData = 0;
@@ -142,7 +149,6 @@ void loop() {
 void modeOne(String c) {
   if (c == motorOneOff) {
     digitalWrite(motorOnePin, LOW);
-    //Serial.println(c);
     MyBlue.println("motor 1 off");
   } else if (c == motorOneOn) {
     digitalWrite(motorOnePin, HIGH);
@@ -169,11 +175,12 @@ void modeOne(String c) {
     // sendData carried out in main loop
   } else {
     MyBlue.println("u");
-    Serial.print(c);
+    Serial.println("print in modeOne"+String(c));
   }
 }
 
 void modeTwo() {
+  Serial.println("mode 2");
   while(!MyBlue.available()) {
     unsigned long currentMillis = millis();
     int pirOneValue = digitalRead(pirOnePin);
@@ -248,7 +255,7 @@ void sendData() {
     //  ",current," + String(current_mA)+",power,"+String(power_mW));
     data += String(loadvoltage)+","+String(current_mA)+","+String(power_mW)+",";
   }
-  data += "data";
+  data += "data"+String(random(1, 10));
   Serial.println(data);
   MyBlue.println(data);
 }
