@@ -202,8 +202,8 @@ void modeTwo() {
       // reset timer
       previousMillisPirOne = millis();
       
-    } else if (!pirOneValue && currentMillisPirOne - previousMillisPirOne > 3000 && pirOneState == 1){
-      // only execute this after 3s passed and pirOne is on
+    } else if (!pirOneValue && currentMillisPirOne - previousMillisPirOne > 5000 && pirOneState == 1){
+      // only execute this once after 3s passed and pirOne is on
       // Serial.println(String(previousMillisPirOne)+" "+String(currentMillisPirOne));
       // Serial.println("pir 1 off");
       // turn  off
@@ -226,7 +226,7 @@ void modeTwo() {
       }
       previousMillisPirTwo = millis();
       
-    } else if (!pirTwoValue && currentMillisPirTwo - previousMillisPirTwo > 3000 && pirTwoState == 1) {
+    } else if (!pirTwoValue && currentMillisPirTwo - previousMillisPirTwo > 5000 && pirTwoState == 1) {
       digitalWrite(ledTwoPin, LOW);
       digitalWrite(motorTwoPin, LOW);
       MyBlue.println("room2off");
