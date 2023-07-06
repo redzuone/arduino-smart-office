@@ -5,6 +5,7 @@
 // note:
 // this sketch use 115200 baud rate. default for hc05 is 9600. change baud rate in setup() or use AT commands for hc05
 // pay attention to pin number
+// many parts are duplicated. could be simplified by turning them into functions
 
 Adafruit_INA219 *ina219_1 = new Adafruit_INA219(0x40);
 Adafruit_INA219 *ina219_2 = new Adafruit_INA219(0x41);
@@ -190,11 +191,11 @@ void modeTwo() {
     unsigned long currentMillisPirOne = millis();
     unsigned long currentMillisPirTwo = millis();
     if (pirOneValue && currentMillisPirOne - previousMillisPirOne > 1000) {
-      //turn on led, motor
+      // turn on led, motor if pirOne is high. checks every 1s
       digitalWrite(ledOnePin, HIGH);
       digitalWrite(motorOnePin, HIGH);
       //MyBlue.println("pir1high,led1on,motor1on");
-      if (!pirOneState) { // pir high
+      if (!pirOneState) { // sends bl code to update info on app and change state 
         MyBlue.println("room1on");
         Serial.println("room1on");
         pirOneState = 1;
@@ -203,7 +204,7 @@ void modeTwo() {
       previousMillisPirOne = millis();
       
     } else if (!pirOneValue && currentMillisPirOne - previousMillisPirOne > 5000 && pirOneState == 1){
-      // only execute this once after 3s passed and pirOne is on
+      // only execute this once after 5s passed and pirOne is low
       // Serial.println(String(previousMillisPirOne)+" "+String(currentMillisPirOne));
       // Serial.println("pir 1 off");
       // turn  off
