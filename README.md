@@ -16,8 +16,8 @@ Control and monitor power usage of DC motors and LEDs in an Android app via Blue
 
 ## Files
 
-SmartOfficeApp.aia - MIT App Inventor project file
-SmartOfficeApp.apk - App created using MIT App inventor
+SmartOfficeApp.aia - MIT App Inventor project file  
+SmartOfficeApp.apk - App created using MIT App inventor  
 arduino-smart-office.ino - Arduino code
 
 ## Pictures
